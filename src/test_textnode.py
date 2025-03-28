@@ -14,10 +14,10 @@ class TestTextNode(unittest.TestCase):
         self.assertNotEqual(node, node2)
     def test_repr(self):
         node = TextNode("This is a text node", TextType.BOLD)
-        self.assertEqual(repr(node), "TextNode(This is a text node, 5, None)")
+        self.assertEqual(repr(node), "TextNode(This is a text node, bold, None)")
     def test_repr_link(self):
         node = TextNode("This is a text node", TextType.LINK, "www.google.com")
-        self.assertEqual(repr(node), "TextNode(This is a text node, 2, www.google.com)")
+        self.assertEqual(repr(node), "TextNode(This is a text node, link, www.google.com)")
     def test_neq_url(self):
         node = TextNode("This is a text node", TextType.LINK, "www.google.com")
         node2 = TextNode("This is a text node", TextType.LINK, "www.google.com")
