@@ -178,7 +178,7 @@ class TestMain(unittest.TestCase):
         )
         
     def test_text_to_textnodes(self):
-        text = "This is a **text** node with a *link* and an `image`"
+        text = "This is a **text** node with a _link_ and an `image`"
         nodes = text_to_textnodes(text)
         self.assertEqual(len(nodes), 7)
         self.assertEqual(nodes[0].text, "This is a ")
@@ -196,3 +196,138 @@ class TestMain(unittest.TestCase):
         self.assertEqual(nodes[6].text, "")
         self.assertEqual(nodes[6].text_type, TextType.TEXT)
         
+    def test_markdown_to_blocks(self):
+        md = """
+This is **bolded** paragraph
+
+This is another paragraph with _italic_ text and `code` here
+This is the same paragraph on a new line
+
+- This is a list
+- with items
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            blocks,
+            [
+                "This is **bolded** paragraph",
+                "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
+                "- This is a list\n- with items",
+            ],
+        )
+    def test_markdown_to_blocks_empty(self):
+        md = ""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(blocks, [])
+        
+    def test_markdown_to_blocks_no_newline(self):
+        md = "This is a single line"
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(blocks, ["This is a single line"])
+        
+    def test_markdown_to_blocks_extra_newline(self):
+        md = """test
+
+This is a single line
+
+
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(blocks, ["test", "This is a single line"])
+        
+    def test_paragraphs(self):
+        md = """
+This is **bolded** paragraph
+text in a p
+tag here
+
+This is another paragraph with _italic_ text and `code` here
+
+"""
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><p>This is <b>bolded</b> paragraph text in a p tag here</p><p>This is another paragraph with <i>italic</i> text and <code>code</code> here</p></div>",
+        )
+
+    def test_codeblock(self):
+        md = """
+```
+This is text that _should_ remain
+the **same** even with inline stuff
+```
+"""
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><pre><code>This is text that _should_ remain\nthe **same** even with inline stuff\n</code></pre></div>",
+        )
+    
+    def test_blockquote(self):
+        md = """
+> This is a blockquote
+> This is another line of the blockquote
+"""
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><blockquote>This is a blockquote\nThis is another line of the blockquote</blockquote></div>",
+        )
+    
+    def test_ordered_list(self):
+        md = """
+1. This is an ordered list
+2. This is the second item
+3. This is the third item
+"""
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><ol>This is an ordered list\nThis is the second item\nThis is the third item</ol></div>",
+        )
+        
+    def test_unordered_list(self):
+        md = """
+- This is an unordered list
+- This is the second item
+- This is the third item
+"""
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><ul>This is an unordered list\nThis is the second item\nThis is the third item</ul></div>",
+        )
+        
+    def test_heading(self):
+        md = """
+# This is a heading
+## This is a subheading
+### This is a sub-subheading
+"""
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><h1>This is a heading</h1><h1>This is a subheading</h1><h1>This is a sub-subheading</h1></div>",
+        )
+        
+    def test_extract_title(self):
+        md = """
+# This is a heading
+
+paragrah text
+"""
+        title, content = extract_title(md)
+        self.assertEqual(title, "This is a heading")
+        self.assertEqual(content, "paragrah text")

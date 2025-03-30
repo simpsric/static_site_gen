@@ -9,6 +9,7 @@ class TextType(Enum):
     CODE = "code"
     BLOCKQUOTE = "blockquote"
     UNDERLINE = "underline"
+    HEADING = "heading"
     
 class TextNode:
     def __init__(self, text: str, text_type: TextType, url=None):
