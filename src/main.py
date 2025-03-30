@@ -1,7 +1,7 @@
 from textnode import TextNode, TextType
 from htmlnode import *
 from blocknode import *
-import re, os, shutil
+import re, os, shutil, sys
 
 def main():
     textN = TextNode("hello", TextType.LINK, "www.google.com")
@@ -186,9 +186,9 @@ def copy_file(src, dst, file):
     else:
         shutil.copy(os.path.join(src, file), os.path.join(dst, file))
 
-def clean_and_copy_static():
-    src_dir = os.path.join(os.getcwd(), "static")
-    dest_dir = os.path.join(os.getcwd(), "public")
+def clean_and_copy_static(src, dst):
+    src_dir = os.path.join(os.getcwd(), src)
+    dest_dir = os.path.join(os.getcwd(), dst)
     shutil.rmtree(dest_dir, ignore_errors=True)
     os.makedirs(dest_dir, exist_ok=True)
     for item in os.listdir(src_dir):
@@ -205,7 +205,7 @@ def verify_and_make_dir(path, dst_path):
     if not os.path.exists(os.path.dirname(path)):
         os.makedirs(os.path.dirname(path), exist_ok=True)
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(basepath, from_path, template_path, dest_path):
     print("Generating HTML page...")
     with open(from_path, "r") as f:
         markdown = f.read()
@@ -214,22 +214,32 @@ def generate_page(from_path, template_path, dest_path):
     title, content = extract_title(markdown)
     html_content = markdown_to_html_node(markdown).to_html()
     html_page = template.replace("{{ Title }}", title).replace("{{ Content }}", html_content)
+    html_page = html_page.replace('href="/', 'href="{BASEPATH}')
+    html_page = html_page.replace('src="/', 'src="{BASEPATH}')
+    html_page = html_page.replace("{BASEPATH}", basepath)
+
     if not os.path.exists(os.path.dirname(dest_path)):
         os.makedirs(os.path.dirname(dest_path), exist_ok=True)
     with open(dest_path, "w") as f:
         f.write(html_page)
     print("HTML page generated successfully.")
     
-def generate_pages(dire_path_content, template_path, dest_dir_path):
+def generate_pages(basepath, dire_path_content, template_path, dest_dir_path):
     print("Generating HTML pages...")
     for root, dirs, files in os.walk(dire_path_content):
         for file in files:
             if file.endswith(".md"):
                 full_path = os.path.join(root, file)
                 dest_path = os.path.join(dest_dir_path, os.path.relpath(full_path, dire_path_content)).replace(".md", ".html")
-                generate_page(full_path, template_path, dest_path)
+                generate_page(basepath, full_path, template_path, dest_path)
     print("HTML pages generated successfully.")
     
 if __name__ == "__main__":
-    clean_and_copy_static()
-    generate_pages("content", "src/template.html", "public")
+    basepath = '/'
+    if len(sys.argv) == 2:
+        basepath = sys.argv[1]
+    elif len(sys.argv) > 3:
+        print("Usage: python3 main.py or python3 main.py <basepath>")
+        exit(1)
+    clean_and_copy_static("static", "docs")
+    generate_pages(basepath, "content", "src/template.html", "docs")
